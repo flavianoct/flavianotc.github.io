@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidade - Sorteio Fácil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            border-bottom: 1px solid #eee;
+            margin-top: 25px;
+            padding-bottom: 5px;
+        }
+        h3 {
+            margin-top: 20px;
+        }
+        p {
+            margin-bottom: 15px;
+        }
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        strong {
+            font-weight: bold;
+        }
+        a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Política de Privacidade do Aplicativo Sorteio Fácil</h1>
+    
+    <p>
+        Esta Política de Privacidade descreve como o aplicativo <strong>Sorteio Fácil</strong> (doravante “o Aplicativo”),
+        desenvolvido por <strong>FlavioCreative</strong>, coleta, usa e protege suas informações.
+    </p>
+
+    <h2>1. Informações que Coletamos</h2>
+    <p>
+        O Aplicativo Sorteio Fácil é projetado para ser simples e focado em sua funcionalidade principal
+        de sorteio de números e listas. Não solicitamos ou coletamos diretamente dados pessoais identificáveis dos
+        usuários, como nome, endereço de e-mail ou número de telefone.
+    </p>
+    <p>
+        No entanto, para fornecer funcionalidades essenciais, como exibição de anúncios e análise de desempenho,
+        o Aplicativo utiliza serviços de parceiros de terceiros que podem coletar certas informações do seu dispositivo:
+    </p>
+    <ul>
+        <li>
+            <strong>Appodeal SDK:</strong> O Appodeal é nossa plataforma principal de mediação e monetização de anúncios.
+            Ele agrega várias redes de publicidade para exibir os anúncios mais relevantes. O Appodeal pode coletar dados
+            não pessoais e técnicos, como identificadores de dispositivo (ex: ID de publicidade do Android), endereço IP,
+            dados de modelo de hardware, versão do sistema operacional e dados de localização aproximada (com base no IP)
+            para otimização e personalização de publicidade.
+        </li>
+        <li>
+            <strong>Google AdMob / Google Play Services:</strong> Para exibir anúncios relevantes, o AdMob e o
+            Google Play Services podem coletar dados sobre seu dispositivo, endereço IP, identificadores
+            de publicidade e interações com anúncios para fins de relatórios e análises de desempenho.
+        </li>
+        <li>
+            <strong>Firebase (Google Analytics for Firebase, Firebase Crashlytics):</strong> Utilizado para entender o
+            desempenho e estabilidade do Aplicativo. Pode incluir coleta anônima de dados de interações no app,
+            telas acessadas e relatórios de falhas (crashes).
+        </li>
+        <li>
+            <strong>Google Play Billing Library:</strong> Caso sejam oferecidas compras dentro do aplicativo (ex: remoção de anúncios),
+            as transações são processadas de forma 100% segura diretamente pelo Google Play. O Aplicativo não tem acesso e não armazena
+            seus dados bancários ou de cartão de crédito.
+        </li>
+    </ul>
+
+    <h2>2. Como Usamos as Informações Coletadas</h2>
+    <p>
+        As informações coletadas pelos serviços parceiros de terceiros são utilizadas para os seguintes propósitos:
+    </p>
+    <ul>
+        <li><strong>Exibição e Otimização de Anúncios:</strong> Servir anúncios personalizados e não personalizados relevantes, limitar a frequência de exibição de um mesmo anúncio e prevenir fraudes.</li>
+        <li><strong>Melhoria e Estabilidade:</strong> Monitorar o desempenho da aplicação, identificar travamentos e otimizar a experiência do usuário.</li>
+        <li><strong>Processamento de Transações:</strong> Gerenciar compras de produtos ou assinaturas dentro do aplicativo através dos serviços do Google Play.</li>
+    </ul>
+
+    <h2>3. Links para Políticas de Privacidade de Terceiros</h2>
+    <p>
+        Recomendamos a leitura das políticas de privacidade dos fornecedores de serviços terceirizados utilizados pelo Aplicativo:
+    </p>
+    <ul>
+        <li><a href="https://appodeal.com/privacy-policy/" target="_blank" rel="noopener noreferrer">Política de Privacidade do Appodeal</a></li>
+        <li><a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Política de Privacidade do Google / AdMob / Firebase</a></li>
+        <li><a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer">Como o Google usa dados em anúncios de parceiros</a></li>
+    </ul>
+
+    <h2>4. Privacidade de Crianças</h2>
+    <p>
+        O Aplicativo Sorteio Fácil é destinado ao público em geral. Não coletamos intencionalmente dados pessoais de crianças
+        menores de 13 anos. Se você é pai, mãe ou responsável legal e tomar conhecimento de que seu filho nos forneceu informações
+        sem o seu consentimento, entre em contato conosco para que possamos adotar as medidas necessárias.
+    </p>
+
+    <h2>5. Seus Direitos de Privacidade (LGPD e GDPR)</h2>
+    <p>
+        Em conformidade com a Lei Geral de Proteção de Dados (LGPD) e o Regulamento Geral sobre a Proteção de Dados (GDPR),
+        você tem o direito de redefinir ou limitar o uso do seu ID de Publicidade a qualquer momento nas configurações do seu sistema operacional Android:
+    </p>
+    <ul>
+        <li>Acesse <strong>Configurações</strong> &gt; <strong>Google</strong> &gt; <strong>Anúncios</strong> no seu dispositivo para redefinir seu ID de publicidade ou desativar anúncios personalizados.</li>
+    </ul>
+
+    <h2>6. Alterações nesta Política de Privacidade</h2>
+    <p>
+        Podemos atualizar nossa Política de Privacidade periodicamente. Recomendamos revisar esta página regularmente
+        para estar ciente de quaisquer alterações. As modificações entram em vigor imediatamente após sua publicação nesta página.
+    </p>
+
+    <h2>7. Contato</h2>
+    <p>
+        Se você tiver alguma dúvida ou sugestão sobre esta Política de Privacidade, entre em contato conosco através do e-mail:
+    </p>
+    <p>
+        <strong>E-mail de Suporte:</strong> <a href="mailto:contato.flaviocreative@gmail.com">contato.flaviocreative@gmail.com</a>
+    </p>
+
+</div>
+
+</body>
+</html>
