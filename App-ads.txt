@@ -22,7 +22,7 @@ google.com, pub-9280770912294352, DIRECT, f08c47fec0942fa0
 
 #Replace the Business_ID below with your Meta Business ID
 
-facebook.com,Business_ID,RESELLER,c3e20eee3f780d68
+facebook.com, 1728542851916166, DIRECT, c3e20eee3f780d68
 
 #Add other networks if applicable
 
