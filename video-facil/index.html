@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vídeo Fácil</title>
+  <meta name="description" content="Crie vídeos curtos de produto para afiliados: roteiro com IA, narração, cortes e legendas, tudo no navegador.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="marca">
+      <span class="logo" aria-hidden="true">▶</span>
+      <div>
+        <h1>Vídeo Fácil</h1>
+        <p>Vídeos de produto prontos para postar</p>
+      </div>
+    </div>
+    <button id="btnConfig" class="btn-icone" type="button" aria-label="Configurações e chaves de API" title="Configurações">⚙️</button>
+  </header>
+
+  <main>
+    <!-- 1. Produto -->
+    <section class="card" id="cardProduto">
+      <h2><span class="num">1</span> Produto</h2>
+      <label class="campo">
+        <span>Link do produto <small>(opcional)</small></span>
+        <input id="link" type="url" inputmode="url" placeholder="https://shopee.com.br/...">
+      </label>
+      <label class="campo">
+        <span>Nome do produto</span>
+        <input id="nome" type="text" placeholder="Ex.: Fone de ouvido Bluetooth X55 com display">
+      </label>
+      <label class="campo">
+        <span>Preço <small>(opcional)</small></span>
+        <input id="preco" type="text" inputmode="decimal" placeholder="Ex.: 49,90">
+      </label>
+      <label class="campo">
+        <span>Destaques do produto <small>(um por linha)</small></span>
+        <textarea id="destaques" rows="4" placeholder="Bateria de 30 horas&#10;Display com a carga do estojo&#10;Som com grave forte"></textarea>
+      </label>
+    </section>
+
+    <!-- 2. Mídia -->
+    <section class="card" id="cardMidia">
+      <h2><span class="num">2</span> Fotos e vídeos</h2>
+      <p class="dica">Use os vídeos e fotos do anúncio ou grave o produto você mesmo. Quanto mais variedade, melhores os cortes.</p>
+      <label class="upload" id="dropMidia">
+        <input id="arquivosMidia" type="file" accept="video/*,image/*" multiple>
+        <span class="upload-icone" aria-hidden="true">＋</span>
+        <span>Adicionar vídeos ou fotos</span>
+      </label>
+      <ul class="miniaturas" id="miniaturas"></ul>
+      <label class="campo">
+        <span>Música de fundo <small>(opcional)</small></span>
+        <input id="arquivoMusica" type="file" accept="audio/*">
+      </label>
+      <p class="info" id="infoMusica" hidden></p>
+      <p class="erro" id="erroMidia" role="alert" hidden></p>
+    </section>
+
+    <!-- 3. Roteiro -->
+    <section class="card" id="cardRoteiro">
+      <h2><span class="num">3</span> Roteiro</h2>
+      <div class="campo">
+        <span>Estilo</span>
+        <div class="chips" id="estilos" role="radiogroup" aria-label="Estilo do roteiro">
+          <button type="button" class="chip ativo" data-valor="animado" role="radio" aria-checked="true">Animado</button>
+          <button type="button" class="chip" data-valor="curiosidade" role="radio" aria-checked="false">Curiosidade</button>
+          <button type="button" class="chip" data-valor="review" role="radio" aria-checked="false">Review sincero</button>
+          <button type="button" class="chip" data-valor="problema" role="radio" aria-checked="false">Problema → solução</button>
+          <button type="button" class="chip" data-valor="oferta" role="radio" aria-checked="false">Oferta</button>
+        </div>
+      </div>
+      <div class="campo">
+        <span>Duração</span>
+        <div class="segmentos" id="duracoes" role="radiogroup" aria-label="Duração do vídeo">
+          <button type="button" class="seg" data-valor="15" role="radio" aria-checked="false">15 s</button>
+          <button type="button" class="seg ativo" data-valor="30" role="radio" aria-checked="true">30 s</button>
+          <button type="button" class="seg" data-valor="45" role="radio" aria-checked="false">45 s</button>
+        </div>
+      </div>
+      <button id="btnRoteiro" class="btn btn-sec" type="button">✨ Gerar roteiro</button>
+      <p class="info" id="infoRoteiro"></p>
+      <p class="erro" id="erroRoteiro" role="alert" hidden></p>
+      <label class="campo">
+        <span>Título no topo do vídeo</span>
+        <input id="gancho" type="text" maxlength="80" placeholder="Ex.: Todo mundo está comprando esse fone">
+      </label>
+      <label class="campo">
+        <span>Narração <small>(pode editar à vontade)</small></span>
+        <textarea id="narracao" rows="6" placeholder="Gere o roteiro acima ou escreva aqui o que a voz vai falar."></textarea>
+      </label>
+      <label class="campo">
+        <span>Legenda do post</span>
+        <textarea id="legendaPost" rows="3" placeholder="Texto e hashtags para colar ao publicar."></textarea>
+      </label>
+      <button id="btnCopiarLegenda" class="btn btn-ghost" type="button">Copiar legenda</button>
+    </section>
+
+    <!-- 4. Voz -->
+    <section class="card" id="cardVoz">
+      <h2><span class="num">4</span> Voz</h2>
+      <label class="campo">
+        <span>Narração</span>
+        <select id="provedor">
+          <option value="nenhum">Sem narração (só legendas)</option>
+          <option value="elevenlabs">ElevenLabs</option>
+          <option value="openai">OpenAI</option>
+        </select>
+      </label>
+      <p class="info" id="infoProvedor"></p>
+      <div id="opcoesVoz">
+        <label class="campo">
+          <span>Voz</span>
+          <select id="voz"></select>
+        </label>
+        <div class="campo">
+          <span>Jeito de falar</span>
+          <div class="segmentos" id="tons" role="radiogroup" aria-label="Jeito de falar">
+            <button type="button" class="seg ativo" data-valor="animada" role="radio" aria-checked="true">Animada</button>
+            <button type="button" class="seg" data-valor="natural" role="radio" aria-checked="false">Natural</button>
+            <button type="button" class="seg" data-valor="grave" role="radio" aria-checked="false">Grave</button>
+          </div>
+        </div>
+        <label class="campo">
+          <span>Velocidade <output id="velocidadeValor">1,10×</output></span>
+          <input id="velocidade" type="range" min="0.8" max="1.3" step="0.05" value="1.1">
+        </label>
+        <button id="btnPrevia" class="btn btn-ghost" type="button">▶ Ouvir a narração</button>
+      </div>
+      <p class="erro" id="erroVoz" role="alert" hidden></p>
+    </section>
+
+    <!-- 5. Gerar -->
+    <section class="card" id="cardGerar">
+      <h2><span class="num">5</span> Gerar vídeo</h2>
+      <div class="linha">
+        <label class="campo">
+          <span>Qualidade</span>
+          <select id="qualidade">
+            <option value="720">720p (mais rápido)</option>
+            <option value="1080">1080p</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span>Chamada final</span>
+          <input id="cta" type="text" maxlength="40" value="🛒 Link no carrinho">
+        </label>
+      </div>
+      <label class="check"><input id="mostrarGancho" type="checkbox" checked> Mostrar o título no topo durante o vídeo</label>
+      <label class="check"><input id="mostrarPreco" type="checkbox" checked> Mostrar o preço no final</label>
+      <label class="check"><input id="ouvirGravando" type="checkbox" checked> Ouvir o áudio enquanto grava</label>
+
+      <button id="btnGerar" class="btn btn-pri" type="button">🚀 Gerar vídeo</button>
+
+      <div id="painelProgresso" hidden>
+        <ol class="etapas" id="etapas">
+          <li data-etapa="roteiro">Roteiro que vende</li>
+          <li data-etapa="voz">Voz profissional</li>
+          <li data-etapa="montagem">Montando seu vídeo</li>
+          <li data-etapa="cortes">Cortes que prendem</li>
+          <li data-etapa="final">Finalizando</li>
+          <li data-etapa="pronto">Pronto pra postar</li>
+        </ol>
+        <div class="barra" aria-hidden="true"><div id="barraProgresso"></div></div>
+        <p class="aviso" id="avisoGravando" hidden>Gravando o vídeo final… mantenha esta aba aberta e a tela ligada.</p>
+      </div>
+
+      <div class="palco" id="palco" hidden>
+        <canvas id="canvas" width="720" height="1280"></canvas>
+      </div>
+
+      <div id="resultado" hidden>
+        <h3>Seu vídeo está pronto!</h3>
+        <video id="videoFinal" controls playsinline></video>
+        <p class="info" id="infoArquivo"></p>
+        <div class="acoes">
+          <a id="btnBaixar" class="btn btn-pri" download>⬇ Baixar vídeo</a>
+          <button id="btnOutraVersao" class="btn btn-sec" type="button">🔀 Gerar outra versão</button>
+        </div>
+        <p class="dica">“Outra versão” reaproveita a mesma narração e muda a ordem e os trechos dos cortes, sem gastar de novo com a voz.</p>
+      </div>
+
+      <p class="erro" id="erro" role="alert" hidden></p>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p>Tudo roda no seu navegador. Suas fotos e vídeos não são enviados para nenhum servidor.</p>
+  </footer>
+
+  <dialog id="dlgConfig">
+    <form method="dialog" id="formConfig">
+      <h2>Configurações</h2>
+      <p class="dica">As chaves ficam salvas só neste navegador e são enviadas apenas para a API de cada serviço. Sem chave, o app usa roteiros prontos e gera vídeo só com legendas.</p>
+
+      <fieldset>
+        <legend>Roteiro com IA: Claude (Anthropic)</legend>
+        <label class="campo"><span>Chave da API</span><input id="cfgAnthropicKey" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
+        <label class="campo"><span>Modelo</span>
+          <select id="cfgAnthropicModel">
+            <option value="claude-opus-5-5">Claude Opus 5.5 (melhor qualidade)</option>
+            <option value="claude-sonnet-5-5">Claude Sonnet 5.5</option>
+            <option value="claude-haiku-5-5">Claude Haiku 5.5 (mais barato)</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Voz: ElevenLabs</legend>
+        <label class="campo"><span>Chave da API</span><input id="cfgElevenKey" type="password" autocomplete="off" placeholder="sk_..."></label>
+        <label class="campo"><span>Modelo de voz</span>
+          <select id="cfgElevenModel">
+            <option value="eleven_multilingual_v2">Multilingual v2 (mais natural)</option>
+            <option value="eleven_flash_v2_5">Flash v2.5 (mais barato)</option>
+            <option value="eleven_turbo_v2_5">Turbo v2.5</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Voz: OpenAI</legend>
+        <label class="campo"><span>Chave da API</span><input id="cfgOpenaiKey" type="password" autocomplete="off" placeholder="sk-..."></label>
+        <label class="campo"><span>Modelo de voz</span>
+          <select id="cfgOpenaiModel">
+            <option value="gpt-4o-mini-tts">gpt-4o-mini-tts (segue o jeito de falar)</option>
+            <option value="tts-1-hd">tts-1-hd</option>
+            <option value="tts-1">tts-1 (mais barato)</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <div class="acoes">
+        <button type="button" class="btn btn-ghost" id="btnApagarChaves">Apagar chaves</button>
+        <button type="submit" class="btn btn-pri" value="salvar">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="bastidores" aria-hidden="true"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
