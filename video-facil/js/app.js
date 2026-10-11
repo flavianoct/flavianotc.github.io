@@ -1,10 +1,14 @@
 // Interface do Vídeo Fácil: liga o formulário ao roteiro, à voz e à gravação.
-import { gerarRoteiroIA, gerarRoteiroModelo, nomeDoLink } from "./roteiro.js";
+import { IaIndisponivel, gerarRoteiroIA, gerarRoteiroModelo, gerarRoteiroSample, nomeDoLink } from "./roteiro.js";
 import { gerarNarracao, listarVozesEleven, VOZES_OPENAI } from "./voz.js";
 import { criarAleatorio, gravarVideo, montarCortes } from "./render.js";
 
 const $ = (id) => document.getElementById(id);
 const CHAVE_CONFIG = "videofacil:config";
+
+// Dentro de uma página do Claude (artifact) o Claude escreve o roteiro sem chave e o
+// download passa pela própria página; as APIs de voz externas ficam bloqueadas lá.
+const naPaginaClaude = typeof window.claude?.use === "function";
 
 const estado = {
   midias: [],
@@ -17,6 +21,11 @@ const estado = {
   vozesEleven: null,
   previa: null,
   videoUrl: null,
+  videoBlob: null,
+  audioProprio: null,
+  audioProprioVersao: 0,
+  sample: null,
+  downloads: null,
   ocupado: false,
 };
 
@@ -264,23 +273,42 @@ $("arquivoMusica").addEventListener("change", async (e) => {
 // ---------------------------------------------------------------------------
 // Roteiro
 
+function usaChaveAnthropic() {
+  return !naPaginaClaude && Boolean(config.anthropicKey);
+}
+
 function atualizarRotuloRoteiro() {
-  $("btnRoteiro").textContent = config.anthropicKey ? "✨ Gerar roteiro com IA" : "✨ Gerar roteiro (modelo pronto)";
+  const comIa = estado.sample || usaChaveAnthropic();
+  $("btnRoteiro").textContent = comIa ? "✨ Gerar roteiro com IA" : "✨ Gerar roteiro (modelo pronto)";
 }
 
 async function gerarRoteiro() {
   const produto = lerProduto();
   if (!produto.nome) throw new Error("Preencha o nome do produto (passo 1).");
   const opcoes = { estilo: estado.estilo, duracao: estado.duracao, velocidade: Number($("velocidade").value) };
-  let roteiro;
-  if (config.anthropicKey) {
+  let roteiro = null;
+  let info = "";
+  if (estado.sample) {
+    try {
+      roteiro = await gerarRoteiroSample(produto, opcoes, estado.sample);
+      info = "Roteiro escrito pela Claude. Revise e ajuste o que quiser.";
+    } catch (err) {
+      if (!(err instanceof IaIndisponivel)) throw err;
+      estado.sample = null;
+      atualizarRotuloRoteiro();
+      info = "A IA não foi liberada nesta página, então usei um roteiro de modelo pronto.";
+    }
+  } else if (usaChaveAnthropic()) {
     roteiro = await gerarRoteiroIA(produto, opcoes, config.anthropicKey, config.anthropicModel);
-    $("infoRoteiro").textContent = "Roteiro escrito pela Claude. Revise e ajuste o que quiser.";
-  } else {
-    roteiro = gerarRoteiroModelo(produto, opcoes);
-    $("infoRoteiro").textContent =
-      "Roteiro de modelo pronto. Para roteiros escritos por IA, coloque sua chave da Anthropic em ⚙️.";
+    info = "Roteiro escrito pela Claude. Revise e ajuste o que quiser.";
   }
+  if (!roteiro) {
+    roteiro = gerarRoteiroModelo(produto, opcoes);
+    info ||= naPaginaClaude
+      ? "Roteiro de modelo pronto. Revise e ajuste o que quiser."
+      : "Roteiro de modelo pronto. Para roteiros escritos por IA, coloque sua chave da Anthropic em ⚙️.";
+  }
+  $("infoRoteiro").textContent = info;
   $("gancho").value = roteiro.gancho;
   $("narracao").value = roteiro.narracao;
   $("legendaPost").value = roteiro.legendaPost;
@@ -289,7 +317,6 @@ async function gerarRoteiro() {
 $("btnRoteiro").addEventListener("click", async () => {
   limparErro();
   const botao = $("btnRoteiro");
-  const rotulo = botao.textContent;
   botao.disabled = true;
   botao.textContent = "Escrevendo…";
   try {
@@ -298,7 +325,7 @@ $("btnRoteiro").addEventListener("click", async () => {
     mostrarErro(err.message, "erroRoteiro");
   } finally {
     botao.disabled = false;
-    botao.textContent = rotulo;
+    atualizarRotuloRoteiro();
   }
 });
 
@@ -326,6 +353,7 @@ function configVoz() {
     velocidade: Number($("velocidade").value),
     chaves: { eleven: config.elevenKey, openai: config.openaiKey },
     modelos: { eleven: config.elevenModel, openai: config.openaiModel },
+    audioProprio: estado.audioProprio,
   };
 }
 
@@ -337,8 +365,10 @@ function preencherVozes(vozes) {
 
 async function atualizarProvedor() {
   const provedor = $("provedor").value;
-  const semVoz = provedor === "nenhum";
-  for (const el of [$("voz").closest(".campo"), $("tons").closest(".campo"), $("btnPrevia")]) el.hidden = semVoz;
+  const comApi = provedor === "elevenlabs" || provedor === "openai";
+  for (const el of [$("voz").closest(".campo"), $("tons").closest(".campo"), $("btnPrevia")]) el.hidden = !comApi;
+  $("campoVelocidade").hidden = provedor === "arquivo";
+  $("campoAudioProprio").hidden = provedor !== "arquivo";
   const info = $("infoProvedor");
   info.textContent = "";
   if (provedor === "openai") {
@@ -356,6 +386,10 @@ async function atualizarProvedor() {
       info.textContent = "";
     }
     preencherVozes(estado.vozesEleven);
+  } else if (provedor === "arquivo") {
+    info.textContent = estado.audioProprio
+      ? `🎙️ Áudio de ${Math.round(estado.audioProprio.duration)} s carregado.`
+      : "Grave no celular lendo a narração do passo 3 e envie o arquivo aqui. As legendas usam o texto do passo 3, com o tempo ajustado ao seu áudio.";
   } else {
     info.textContent =
       "O vídeo sai só com legendas. Dá para colocar uma música de fundo no passo 2 ou adicionar som no app onde for postar.";
@@ -365,6 +399,20 @@ async function atualizarProvedor() {
 $("provedor").addEventListener("change", () => {
   config.provedor = $("provedor").value;
   salvarConfig();
+  atualizarProvedor();
+});
+$("arquivoNarracao").addEventListener("change", async (e) => {
+  limparErro();
+  const arquivo = e.target.files[0];
+  estado.audioProprio = null;
+  estado.audioProprioVersao++;
+  if (arquivo) {
+    try {
+      estado.audioProprio = await contextoAudio().decodeAudioData(await arquivo.arrayBuffer());
+    } catch {
+      mostrarErro("Não consegui abrir esse áudio. Tente um arquivo MP3, M4A ou WAV.", "erroVoz");
+    }
+  }
   atualizarProvedor();
 });
 $("voz").addEventListener("change", () => {
@@ -378,7 +426,8 @@ async function obterNarracao() {
   const texto = $("narracao").value;
   const modelo =
     cfg.provedor === "elevenlabs" ? cfg.modelos.eleven : cfg.provedor === "openai" ? cfg.modelos.openai : "";
-  const chave = JSON.stringify([texto, cfg.provedor, cfg.voz, cfg.tom, cfg.velocidade, modelo]);
+  const gravacao = cfg.provedor === "arquivo" ? estado.audioProprioVersao : 0;
+  const chave = JSON.stringify([texto, cfg.provedor, cfg.voz, cfg.tom, cfg.velocidade, modelo, gravacao]);
   if (estado.narracao.chave === chave && estado.narracao.resultado) return estado.narracao.resultado;
   const resultado = await gerarNarracao(texto, cfg, contextoAudio());
   estado.narracao = { chave, resultado };
@@ -521,11 +570,12 @@ async function gerarVideo() {
 function mostrarResultado({ blob, extensao }, duracao) {
   if (estado.videoUrl) URL.revokeObjectURL(estado.videoUrl);
   estado.videoUrl = URL.createObjectURL(blob);
+  estado.videoBlob = blob;
   $("videoFinal").src = estado.videoUrl;
   const slug = (lerProduto().nome || "produto")
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/\p{M}/gu, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 40);
@@ -534,6 +584,9 @@ function mostrarResultado({ blob, extensao }, duracao) {
   baixar.download = `video-${slug || "produto"}.${extensao}`;
   const mb = (blob.size / 1024 / 1024).toFixed(1).replace(".", ",");
   let info = `${Math.round(duracao)} s · ${mb} MB · ${extensao.toUpperCase()}`;
+  // Numa página do Claude, um link de download comum não funciona; sem a capability, some o botão.
+  baixar.hidden = naPaginaClaude && !estado.downloads;
+  if (baixar.hidden) info += ". Salvar o arquivo não está disponível nesta visualização";
   if (extensao === "webm") {
     info +=
       ". Seu navegador gravou em WebM; se o app de postagem não aceitar, gere de novo no Chrome atualizado ou no Safari, que gravam em MP4.";
@@ -542,6 +595,19 @@ function mostrarResultado({ blob, extensao }, duracao) {
   $("resultado").hidden = false;
   $("resultado").scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+$("btnBaixar").addEventListener("click", async (e) => {
+  if (!estado.downloads || !estado.videoBlob) return; // fora da página do Claude, o link baixa sozinho
+  e.preventDefault();
+  try {
+    await estado.downloads.save({ filename: $("btnBaixar").download, data: estado.videoBlob });
+  } catch (err) {
+    if (err?.code === "declined") return;
+    if (err?.code === "rate_limited")
+      mostrarErro("Já existe um pedido para salvar aberto. Responda a ele e tente de novo.");
+    else mostrarErro("Não consegui salvar o vídeo nesta visualização.");
+  }
+});
 
 $("btnGerar").addEventListener("click", gerarVideo);
 $("btnOutraVersao").addEventListener("click", () => {
@@ -572,7 +638,20 @@ function limparErro() {
 // ---------------------------------------------------------------------------
 // Início
 
+async function prepararPaginaClaude() {
+  $("btnConfig").hidden = true;
+  for (const valor of ["elevenlabs", "openai"]) $("provedor").querySelector(`option[value="${valor}"]`)?.remove();
+  const [sample, downloads] = await Promise.all([window.claude.use("sample"), window.claude.use("downloads")]);
+  estado.sample = sample;
+  estado.downloads = downloads;
+  atualizarRotuloRoteiro();
+}
+
 carregarConfig();
 if (config.provedor) $("provedor").value = config.provedor;
+if (naPaginaClaude) {
+  if (!["nenhum", "arquivo"].includes($("provedor").value)) $("provedor").value = "nenhum";
+  prepararPaginaClaude();
+}
 atualizarRotuloRoteiro();
 atualizarProvedor();

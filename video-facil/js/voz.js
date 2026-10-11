@@ -59,7 +59,7 @@ function traduzGenero(g) {
 
 /**
  * Gera a narração.
- * cfg: { provedor, voz, tom, velocidade, chaves: { eleven, openai }, modelos: { eleven, openai } }
+ * cfg: { provedor, voz, tom, velocidade, chaves: { eleven, openai }, modelos: { eleven, openai }, audioProprio }
  */
 export async function gerarNarracao(texto, cfg, audioCtx) {
   const limpo = texto.replace(/\s+/g, " ").trim();
@@ -67,6 +67,7 @@ export async function gerarNarracao(texto, cfg, audioCtx) {
 
   if (cfg.provedor === "elevenlabs") return narracaoEleven(limpo, cfg, audioCtx);
   if (cfg.provedor === "openai") return narracaoOpenAI(limpo, cfg, audioCtx);
+  if (cfg.provedor === "arquivo") return narracaoGravada(limpo, cfg.audioProprio);
   return narracaoSemVoz(limpo, cfg.velocidade);
 }
 
@@ -131,6 +132,12 @@ async function narracaoOpenAI(texto, cfg, audioCtx) {
   });
   if (!r.ok) throw new Error(await erroHttp("OpenAI", r));
   const buffer = await audioCtx.decodeAudioData(await r.arrayBuffer());
+  return { buffer, palavras: estimarPalavras(texto, buffer), duracao: buffer.duration };
+}
+
+/** Gravação enviada pela pessoa: o tempo das legendas é estimado pelo som do áudio. */
+function narracaoGravada(texto, buffer) {
+  if (!buffer) throw new Error("Envie o arquivo de áudio com a sua narração (passo 4).");
   return { buffer, palavras: estimarPalavras(texto, buffer), duracao: buffer.duration };
 }
 

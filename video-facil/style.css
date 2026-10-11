@@ -68,7 +68,7 @@ body {
 
 .topo {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 5;
   display: flex;
   align-items: center;
@@ -135,6 +135,7 @@ main {
 }
 
 .campo { display: grid; gap: 6px; min-width: 0; }
+#opcoesVoz { display: grid; gap: 14px; }
 .campo > span { font-weight: 600; font-size: 0.92rem; display: flex; justify-content: space-between; gap: 8px; }
 .campo small { font-weight: 400; color: var(--texto-suave); }
 

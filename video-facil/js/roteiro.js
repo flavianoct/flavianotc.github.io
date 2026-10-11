@@ -1,5 +1,7 @@
-// Geração do roteiro: com Claude (se houver chave) ou com modelos prontos.
-import Anthropic from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
+// Geração do roteiro: com Claude (pela página do Claude ou com chave da API) ou com modelos prontos.
+
+// O SDK só é baixado quando alguém usa a própria chave da Anthropic.
+const URL_SDK = "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.128.0/+esm";
 
 // Palavras faladas por segundo numa locução de vídeo curto em velocidade 1×.
 const PALAVRAS_POR_SEGUNDO = 2.6;
@@ -67,6 +69,12 @@ function montarPedido(produto, opcoes) {
 
 /** Gera o roteiro com a API da Claude. Lança erro com mensagem amigável se falhar. */
 export async function gerarRoteiroIA(produto, opcoes, apiKey, modelo) {
+  let Anthropic;
+  try {
+    ({ default: Anthropic } = await import(URL_SDK));
+  } catch {
+    throw new Error("Não consegui carregar a biblioteca da Anthropic. Verifique sua internet.");
+  }
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const pedido = {
     model: modelo,
@@ -87,7 +95,7 @@ export async function gerarRoteiroIA(produto, opcoes, apiKey, modelo) {
   try {
     resposta = await client.beta.messages.create(pedido);
   } catch (err) {
-    throw new Error(mensagemErroAnthropic(err));
+    throw new Error(mensagemErroAnthropic(Anthropic, err));
   }
 
   if (resposta.stop_reason === "refusal") {
@@ -114,7 +122,53 @@ export async function gerarRoteiroIA(produto, opcoes, apiKey, modelo) {
   };
 }
 
-function mensagemErroAnthropic(err) {
+/** Erro do Claude da página que deve esconder a IA e cair para o roteiro de modelo. */
+export class IaIndisponivel extends Error {}
+
+/**
+ * Gera o roteiro com o Claude da própria página (capability "sample" do artifact),
+ * sem precisar de chave. `sample` é a função devolvida por `claude.use("sample")`.
+ */
+export async function gerarRoteiroSample(produto, opcoes, sample) {
+  const entrada = [
+    SISTEMA,
+    "",
+    montarPedido(produto, opcoes),
+    "",
+    "Responda só com um objeto JSON com estas chaves:",
+    '- "gancho": título curto (até 8 palavras) que fica fixo no topo do vídeo',
+    '- "narracao": o texto completo que a voz vai falar',
+    '- "legenda_post": legenda para o post, com 1 a 3 emojis, sem hashtags',
+    '- "hashtags": lista de 5 a 8 hashtags, cada uma começando com #',
+  ].join("\n");
+
+  let dados;
+  try {
+    dados = await sample.json(entrada, { modelTier: "default", cache: false });
+  } catch (err) {
+    const codigo = err?.code;
+    if (
+      ["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(codigo)
+    ) {
+      throw new IaIndisponivel("A IA não está liberada nesta página.");
+    }
+    if (codigo === "rate_limited")
+      throw new Error("Muitos pedidos seguidos para a IA. Espere um pouco e tente de novo.");
+    if (codigo === "session_expired") throw new Error("Sua sessão no Claude expirou. Entre de novo e tente outra vez.");
+    if (codigo === "refused") throw new Error("A IA recusou este pedido. Mude os dados do produto e tente de novo.");
+    throw new Error("A IA não conseguiu escrever o roteiro agora. Tente de novo.");
+  }
+  if (!dados || typeof dados.narracao !== "string") {
+    throw new Error("A IA devolveu o roteiro num formato inesperado. Tente de novo.");
+  }
+  return {
+    gancho: String(dados.gancho || "").trim(),
+    narracao: dados.narracao.trim(),
+    legendaPost: juntarLegenda(dados.legenda_post, dados.hashtags),
+  };
+}
+
+function mensagemErroAnthropic(Anthropic, err) {
   if (err instanceof Anthropic.AuthenticationError)
     return "Chave da Anthropic inválida. Confira nas configurações (⚙️).";
   if (err instanceof Anthropic.PermissionDeniedError)
@@ -243,7 +297,7 @@ export function gerarRoteiroModelo(produto, opcoes, aleatorio = Math.random) {
   const palavrasNome = nome
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/\p{M}/gu, "")
     .split(/[^a-z0-9]+/)
     .filter((p) => p.length > 3)
     .slice(0, 2)
